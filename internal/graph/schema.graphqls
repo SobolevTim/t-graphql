@@ -1,0 +1,54 @@
+schema {
+  query: Query
+  mutation: Mutation
+  subscription: Subscription
+}
+
+type Query {
+  posts(page: Int, pageSize: Int): [Post!]!
+  post(id: ID!): Post
+}
+
+type Mutation {
+  createPost(input: CreatePostInput!): Post!
+  updatePostCommentsPermission(postID: ID!, allowComments: Boolean!): Post!
+  addComment(input: AddCommentInput!): Comment!
+}
+
+type Subscription {
+  commentAdded(postID: ID!): Comment!
+}
+
+type Post {
+  id: ID!
+  title: String!
+  content: String!
+  author: String!
+  createdAt: String!
+  allowComments: Boolean!
+  comments(page: Int, pageSize: Int): [Comment!]!
+}
+
+type Comment {
+  id: ID!
+  postID: ID!
+  parentID: ID
+  content: String!
+  author: String!
+  createdAt: String!
+  replies(page: Int, pageSize: Int): [Comment!]!
+}
+
+input CreatePostInput {
+  title: String!
+  content: String!
+  author: String!
+  allowComments: Boolean = true
+}
+
+input AddCommentInput {
+  postID: ID!
+  parentID: ID
+  content: String!
+  author: String!
+}

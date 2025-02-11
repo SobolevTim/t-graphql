@@ -1,0 +1,7 @@
+FROM postgres:13-alpine
+
+# Копируем скрипт инициализации в контейнер
+COPY ./init/init.sql /docker-entrypoint-initdb.d/
+
+# Открываем порт для PostgreSQL
+EXPOSE 5432

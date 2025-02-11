@@ -1,0 +1,27 @@
+schema:
+  - "internal/graph/schema.graphqls"  # Путь к файлу со схемой GraphQL
+
+exec:
+  filename: internal/graph/generated/generated.go  # Путь и имя файла сгенерированного кода для executor
+  package: generated
+
+model:
+  filename: internal/graph/model/models_gen.go  # Файл, куда будут сгенерированы модели по схеме
+  package: model
+
+resolver:
+  layout: follow-schema  # Автоматически создаст резолверы согласно структуре схемы
+  dir: internal/graph/  # Папка для файлов-резолверов
+  package: resolvers
+
+skip_mod_tidy: true  # Пропустить go mod tidy после генерации
+
+models:
+  Post:
+    fields:
+      comments:
+        resolver: true
+  Comment:
+    fields:
+      replies:
+        resolver: true
