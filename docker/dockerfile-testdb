@@ -1,0 +1,12 @@
+FROM postgres:15
+
+# Устанавливаем переменные окружения для тестовой БД
+ENV POSTGRES_USER=test_user
+ENV POSTGRES_PASSWORD=test_password
+ENV POSTGRES_DB=test_db
+
+# Копируем скрипт инициализации
+COPY ./init/init.sql /docker-entrypoint-initdb.d/
+
+# Открываем порт
+EXPOSE 5432

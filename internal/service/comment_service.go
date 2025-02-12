@@ -28,8 +28,8 @@ func NewCommentService(store store.Store) *CommentService {
 func (s *CommentService) AddComment(postID, content, author string, ParentID *string) (*store.Comment, error) {
 	// Проверка наличия поста
 	post, err := s.store.GetPostByID(postID)
-	if err == errors.New("post not found") {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("failed to get post: %w", err)
 	}
 
 	// Проверка размера комментария

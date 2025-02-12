@@ -1,0 +1,14 @@
+
+services:
+  test-db:
+    build:
+      context: .
+      dockerfile: dockerfile-testdb
+    container_name: test-db
+    environment:
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_DB: test_db
+    ports:
+      - "5433:5432"
+    restart: unless-stopped
