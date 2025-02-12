@@ -64,13 +64,16 @@ t-graphql/
 
 ## Настройка окружения
 Перед запуском проекта необходимо настроить несколько переменных окружения. Пример .env файла:
+```
 STORAGE_TYPE memory или postgres
-STORAGE_TYPE=postgres
+```
 Данные для postgres ДБ
+```
+STORAGE_TYPE=postgres
 DB_USER=your_db_user
 DB_PASSWORD=your_db_password
 DB_NAME=your_db_name
-
+```
 ## Технологии
 Go (1.23) — Основной язык программирования для разработки API.
 PostgreSQL — База данных для хранения данных.
