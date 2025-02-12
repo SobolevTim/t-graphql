@@ -189,19 +189,20 @@ func (s *Service) GetCommentsByPostIDAndParentID(postID string, parentID *string
 // Subscribe — добавляет подписчика на новые комментарии к посту
 func (s *Service) Subscribe(postID string) (<-chan *Comment, func()) {
 	ch := make(chan *Comment)
+	ctx, cancel := context.WithCancel(context.Background())
 	var once sync.Once
 
-	conn, err := s.DB.Acquire(context.Background())
+	conn, err := s.DB.Acquire(ctx)
 	if err != nil {
 		log.Printf("could not acquire connection: %v", err)
-		close(ch)
+		cancel()
 		return nil, nil
 	}
 
-	_, err = conn.Exec(context.Background(), fmt.Sprintf(`LISTEN "comments_%s"`, postID))
+	_, err = conn.Exec(ctx, fmt.Sprintf(`LISTEN "comments_%s"`, postID))
 	if err != nil {
 		log.Printf("could not listen to channel: %v", err)
-		close(ch)
+		cancel()
 		conn.Release()
 		return nil, nil
 	}
@@ -215,8 +216,11 @@ func (s *Service) Subscribe(postID string) (<-chan *Comment, func()) {
 		}()
 
 		for {
-			notification, err := conn.Conn().WaitForNotification(context.Background())
+			notification, err := conn.Conn().WaitForNotification(ctx)
 			if err != nil {
+				if ctx.Err() != nil {
+					return
+				}
 				log.Printf("error while waiting for notification: %v", err)
 				return
 			}
@@ -227,22 +231,18 @@ func (s *Service) Subscribe(postID string) (<-chan *Comment, func()) {
 				continue
 			}
 
-			ch <- comment
+			// Отправляем уведомление с учетом возможности отмены
+			select {
+			case ch <- comment:
+			case <-ctx.Done():
+				return
+			}
 		}
 	}()
 
 	unsubscribe := func() {
-		unlistenConn, err := s.DB.Acquire(context.Background())
-		if err != nil {
-			log.Printf("could not acquire connection for unlisten: %v", err)
-			return
-		}
-		defer unlistenConn.Release()
-
-		_, err = unlistenConn.Exec(context.Background(), fmt.Sprintf(`UNLISTEN "comments_%s"`, postID))
-		if err != nil {
-			log.Printf("could not unlisten to channel: %v", err)
-		}
+		// Отмена контекста прервет WaitForNotification
+		cancel()
 		once.Do(func() {
 			close(ch)
 			conn.Release()
