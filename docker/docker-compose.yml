@@ -30,7 +30,7 @@ services:
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
-      - STORAGE_TYPE=postgres
+      - STORAGE_TYPE=${STORAGE_TYPE}
       - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
 
 volumes:
