@@ -27,7 +27,6 @@ func main() {
 	}
 
 	r := gin.Default()
-	gin.SetMode(gin.ReleaseMode)
 
 	// Создаем сервисы для работы с постами и комментариями
 	postService := service.NewPostService(store)
