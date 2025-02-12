@@ -83,6 +83,7 @@ func (s *MemoryStore) GetPostByID(id string) (*Post, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
+	// Поиск поста в хранилище
 	post, exists := s.posts[id]
 	if !exists {
 		return nil, errors.New("post not found")
@@ -96,11 +97,13 @@ func (s *MemoryStore) UpdatePostCommentsPermission(postID string, allowComments 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	// Поиск поста в хранилище
 	post, exists := s.posts[postID]
 	if !exists {
 		return nil, errors.New("post not found")
 	}
 
+	// Обновление разрешения на комментарии
 	post.AllowComments = allowComments
 	return post, nil
 }
@@ -120,6 +123,7 @@ func (s *MemoryStore) CreateComment(id, postID string, parentID *string, content
 		CreatedAt: time.Now(),
 	}
 
+	// Запись комментария в хранилище
 	s.comments[postID] = append(s.comments[postID], comment)
 	return comment, nil
 }
@@ -130,9 +134,12 @@ func (s *MemoryStore) GetCommentsByPostID(postID string, page, pageSize *int) ([
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	var result []*Comment
+
+	// Пагинация
 	start := 0
 	end := len(s.comments[postID])
 
+	// Если указаны page и pageSize, применяем пагинацию
 	if page != nil && pageSize != nil {
 		fmt.Println("page:", *page, "pageSize:", *pageSize)
 		start = (*page - 1) * *pageSize
@@ -144,6 +151,7 @@ func (s *MemoryStore) GetCommentsByPostID(postID string, page, pageSize *int) ([
 			end = len(s.comments[postID])
 		}
 	}
+	// Формируем список комментариев к посту
 	for i := start; i < end; i++ {
 		c := s.comments[postID][i]
 		if c.ParentID == nil {
@@ -220,9 +228,9 @@ func (s *MemoryStore) Subscribe(postID string) (<-chan *Comment, func()) {
 func isClosed(ch chan *Comment) bool {
 	select {
 	case <-ch:
-		return true
+		return true // Канал закрыт
 	default:
-		return false
+		return false // Канал открыт
 	}
 }
 
@@ -230,6 +238,8 @@ func isClosed(ch chan *Comment) bool {
 func (s *MemoryStore) Publish(comment *Comment) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	// Поиск подписчиков поста
 	channels, exists := s.subscribers[comment.PostID]
 	if !exists {
 		return

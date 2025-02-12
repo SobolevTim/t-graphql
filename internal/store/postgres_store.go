@@ -42,6 +42,7 @@ func (s *Service) CreatePost(id, title, content, author string, allowComments bo
         VALUES ($1, $2, $3, $4, $5, NOW())
         RETURNING id, title, content, author, allow_comments, created_at
         `
+	// Выполнение запроса
 	row := s.DB.QueryRow(context.Background(), query, id, title, content, author, allowComments)
 
 	post := &Post{}
@@ -61,12 +62,14 @@ func (s *Service) GetPosts(page, pageSize int) ([]*Post, error) {
 		ORDER BY created_at DESC
 		LIMIT $1 OFFSET $2
 		`
+	// Выполнение запроса
 	rows, err := s.DB.Query(context.Background(), query, pageSize, (page-1)*pageSize)
 	if err != nil {
 		return nil, fmt.Errorf("could not get posts: %w", err)
 	}
 	defer rows.Close()
 
+	// Обработка результатов запроса
 	posts := make([]*Post, 0)
 	for rows.Next() {
 		post := &Post{}
@@ -86,8 +89,10 @@ func (s *Service) GetPostByID(id string) (*Post, error) {
 		FROM posts
 		WHERE id = $1
 		`
+	// Выполнение запроса
 	row := s.DB.QueryRow(context.Background(), query, id)
 
+	// Обработка результата запроса
 	post := &Post{}
 	if err := row.Scan(&post.ID, &post.Title, &post.Content, &post.Author, &post.AllowComments, &post.CreatedAt); err != nil {
 		return nil, fmt.Errorf("could not get post: %w", err)
@@ -104,8 +109,10 @@ func (s *Service) UpdatePostCommentsPermission(postID string, allowComments bool
 		WHERE id = $2
 		RETURNING id, title, content, author, allow_comments, created_at
 		`
+	// Выполнение запроса
 	row := s.DB.QueryRow(context.Background(), query, allowComments, postID)
 
+	// Обработка результата запроса
 	post := &Post{}
 	if err := row.Scan(&post.ID, &post.Title, &post.Content, &post.Author, &post.AllowComments, &post.CreatedAt); err != nil {
 		return nil, fmt.Errorf("could not update post: %w", err)
@@ -122,8 +129,10 @@ func (s *Service) CreateComment(id, postID string, parentID *string, content, au
 		VALUES ($1, $2, $3, $4, $5, NOW())
 		RETURNING id, post_id, parent_id, content, author, created_at
 		`
+	// Выполнение запроса
 	row := s.DB.QueryRow(context.Background(), query, id, postID, parentID, content, author)
 
+	// Обработка результата запроса
 	comment := &Comment{}
 	if err := row.Scan(&comment.ID, &comment.PostID, &comment.ParentID, &comment.Content, &comment.Author, &comment.CreatedAt); err != nil {
 		return nil, fmt.Errorf("could not create comment: %w", err)
@@ -141,12 +150,14 @@ func (s *Service) GetCommentsByPostID(postID string, page, pageSize *int) ([]*Co
 		ORDER BY created_at DESC
 		LIMIT $2 OFFSET $3
 		`
+	// Выполнение запроса
 	rows, err := s.DB.Query(context.Background(), query, postID, pageSize, (*page-1)**pageSize)
 	if err != nil {
 		return nil, fmt.Errorf("could not get comments: %w", err)
 	}
 	defer rows.Close()
 
+	// Обработка результатов запроса
 	comments := make([]*Comment, 0)
 	for rows.Next() {
 		comment := &Comment{}
@@ -168,12 +179,14 @@ func (s *Service) GetCommentsByPostIDAndParentID(postID string, parentID *string
 		ORDER BY created_at DESC
 		LIMIT $3 OFFSET $4
 		`
+	// Выполнение запроса
 	rows, err := s.DB.Query(context.Background(), query, postID, parentID, pageSize, (*page-1)**pageSize)
 	if err != nil {
 		return nil, fmt.Errorf("could not get comments: %w", err)
 	}
 	defer rows.Close()
 
+	// Обработка результатов запроса
 	comments := make([]*Comment, 0)
 	for rows.Next() {
 		comment := &Comment{}
@@ -189,9 +202,11 @@ func (s *Service) GetCommentsByPostIDAndParentID(postID string, parentID *string
 // Subscribe — добавляет подписчика на новые комментарии к посту
 func (s *Service) Subscribe(postID string) (<-chan *Comment, func()) {
 	ch := make(chan *Comment)
+	// Создание контекста для отмены подписки
 	ctx, cancel := context.WithCancel(context.Background())
 	var once sync.Once
 
+	// Подключение к базе данных
 	conn, err := s.DB.Acquire(ctx)
 	if err != nil {
 		log.Printf("could not acquire connection: %v", err)
@@ -199,6 +214,7 @@ func (s *Service) Subscribe(postID string) (<-chan *Comment, func()) {
 		return nil, nil
 	}
 
+	// Подписка на канал уведомлений
 	_, err = conn.Exec(ctx, fmt.Sprintf(`LISTEN "comments_%s"`, postID))
 	if err != nil {
 		log.Printf("could not listen to channel: %v", err)
@@ -207,15 +223,17 @@ func (s *Service) Subscribe(postID string) (<-chan *Comment, func()) {
 		return nil, nil
 	}
 
+	// Получение уведомлений
 	go func() {
 		defer func() {
 			once.Do(func() {
-				close(ch)
-				conn.Release()
+				close(ch)      // Закрытие канала
+				conn.Release() // Освобождение соединения
 			})
 		}()
 
 		for {
+			// Ожидание уведомления
 			notification, err := conn.Conn().WaitForNotification(ctx)
 			if err != nil {
 				if ctx.Err() != nil {
@@ -225,6 +243,7 @@ func (s *Service) Subscribe(postID string) (<-chan *Comment, func()) {
 				return
 			}
 
+			// Разбор уведомления
 			comment := &Comment{}
 			if err := json.Unmarshal([]byte(notification.Payload), comment); err != nil {
 				log.Printf("could not unmarshal comment: %v", err)
@@ -233,8 +252,8 @@ func (s *Service) Subscribe(postID string) (<-chan *Comment, func()) {
 
 			// Отправляем уведомление с учетом возможности отмены
 			select {
-			case ch <- comment:
-			case <-ctx.Done():
+			case ch <- comment: // Отправка уведомления
+			case <-ctx.Done(): // Отмена подписки
 				return
 			}
 		}
@@ -244,8 +263,8 @@ func (s *Service) Subscribe(postID string) (<-chan *Comment, func()) {
 		// Отмена контекста прервет WaitForNotification
 		cancel()
 		once.Do(func() {
-			close(ch)
-			conn.Release()
+			close(ch)      // Закрытие канала
+			conn.Release() // Освобождение соединения
 		})
 	}
 
@@ -254,12 +273,14 @@ func (s *Service) Subscribe(postID string) (<-chan *Comment, func()) {
 
 // Publish — публикация комментария
 func (s *Service) Publish(comment *Comment) {
+	// Размещение комментария в канале уведомлений
 	payload, err := json.Marshal(comment)
 	if err != nil {
 		log.Printf("could not marshal comment: %v", err)
 		return
 	}
 
+	// Отправка уведомления
 	_, err = s.DB.Exec(context.Background(), fmt.Sprintf(`NOTIFY "comments_%s", '%s'`, comment.PostID, payload))
 	if err != nil {
 		log.Printf("could not notify channel: %v", err)

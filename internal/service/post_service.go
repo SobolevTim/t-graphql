@@ -45,6 +45,7 @@ func (s *PostService) CreatePost(title, content, author string, allowComments bo
 
 // GetPosts возвращает список постов с пагинацией
 func (s *PostService) GetPosts(page, pageSize int) ([]*store.Post, error) {
+	// Проверка входных параметров и установка значений по умолчанию
 	if page <= 0 {
 		page = defaultPage
 	}

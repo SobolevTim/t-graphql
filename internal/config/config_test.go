@@ -8,7 +8,6 @@ import (
 )
 
 func TestLoadConfig_DefaultValues(t *testing.T) {
-	// Unset environment variables to ensure defaults are used
 	os.Unsetenv("STORAGE_TYPE")
 	os.Unsetenv("DATABASE_URL")
 
@@ -25,7 +24,6 @@ func TestLoadConfig_DefaultValues(t *testing.T) {
 }
 
 func TestLoadConfig_WithEnvVariables(t *testing.T) {
-	// Set environment variables
 	os.Setenv("STORAGE_TYPE", "disk")
 	os.Setenv("DATABASE_URL", "postgres://newuser:newpass@localhost:5432/newdb")
 
@@ -40,7 +38,6 @@ func TestLoadConfig_WithEnvVariables(t *testing.T) {
 		t.Errorf("Expected DatabaseURL to be '%s', got '%s'", expectedDatabaseURL, config.DatabaseURL)
 	}
 
-	// Clean up environment variables
 	os.Unsetenv("STORAGE_TYPE")
 	os.Unsetenv("DATABASE_URL")
 }
