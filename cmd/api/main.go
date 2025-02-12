@@ -25,8 +25,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error initializing store: %v", err)
 	}
-
+	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
+
+	// Устанавливаем доверенные прокси-сервера
+	r.SetTrustedProxies([]string{"127.0.0.1", "192.168.1.1"})
 
 	// Создаем сервисы для работы с постами и комментариями
 	postService := service.NewPostService(store)
@@ -46,9 +49,6 @@ func main() {
 			},
 		},
 	})
-
-	// Логирование запросов через middleware
-	r.Use(gin.Logger())
 
 	// Регистрируем эндпоинт для GraphQL (POST и WebSocket запросы)
 	r.Any("/graphql", gin.WrapH(srv))
