@@ -27,16 +27,18 @@ func main() {
 	}
 
 	r := gin.Default()
+	gin.SetMode(gin.ReleaseMode)
 
+	// Создаем сервисы для работы с постами и комментариями
 	postService := service.NewPostService(store)
 	commentService := service.NewCommentService(store)
 	subscriptionService := service.NewSubscriptionService(store)
 
-	// Создаём GraphQL-сервер
+	// Создаём резолверы
 	resolver := resolvers.NewResolver(postService, commentService, subscriptionService)
 	srv := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 
-	// Добавляем транспорты для обработки запросов
+	// Добавляем транспорты для обработки GraphQL запросов
 	srv.AddTransport(transport.POST{})
 	srv.AddTransport(transport.Websocket{
 		Upgrader: websocket.Upgrader{
@@ -46,15 +48,18 @@ func main() {
 		},
 	})
 
-	// Логирование запросов
+	// Логирование запросов через middleware
 	r.Use(gin.Logger())
 
-	// Регистрируем endpoint для всех HTTP-методов, чтобы WebSocket-запросы (GET) тоже обрабатывались.
+	// Регистрируем эндпоинт для GraphQL (POST и WebSocket запросы)
 	r.Any("/graphql", gin.WrapH(srv))
+
+	// Добавляем Playground для тестирования запросов
 	r.GET("/", gin.WrapH(playground.Handler("GraphQL playground", "/graphql")))
 
-	log.Println("🚀 GraphQL API running at http://localhost:8080")
-	if err := http.ListenAndServe(":8080", r); err != nil {
+	// Запуск API-сервера
+	log.Println("GraphQL API running at http://localhost:8080")
+	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
