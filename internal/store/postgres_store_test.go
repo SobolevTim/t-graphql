@@ -265,7 +265,7 @@ func TestGetCommentsByPostID(t *testing.T) {
 
 	page := 1
 	pageSize := 10
-	comments, err := testStore.GetCommentsByPostID(postID, &page, &pageSize)
+	comments, err := testStore.GetCommentsByPostID(postID, page, pageSize)
 	if err != nil {
 		t.Fatalf("GetCommentsByPostID failed: %v", err)
 	}
@@ -305,7 +305,7 @@ func TestGetCommentsByPostIDAndParentID(t *testing.T) {
 
 	page := 1
 	pageSize := 10
-	replies, err := testStore.GetCommentsByPostIDAndParentID(postID, &parentCommentID, &page, &pageSize)
+	replies, err := testStore.GetCommentsByPostIDAndParentID(postID, &parentCommentID, page, pageSize)
 	if err != nil {
 		t.Fatalf("GetCommentsByPostIDAndParentID failed: %v", err)
 	}

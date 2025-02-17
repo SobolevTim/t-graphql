@@ -39,12 +39,12 @@ func (m *MockStore) CreateComment(id, postID string, parentID *string, content, 
 	return args.Get(0).(*store.Comment), args.Error(1)
 }
 
-func (m *MockStore) GetCommentsByPostID(postID string, page, pageSize *int) ([]*store.Comment, error) {
+func (m *MockStore) GetCommentsByPostID(postID string, page, pageSize int) ([]*store.Comment, error) {
 	args := m.Called(postID, page, pageSize)
 	return args.Get(0).([]*store.Comment), args.Error(1)
 }
 
-func (m *MockStore) GetCommentsByPostIDAndParentID(postID string, parentID *string, page, pageSize *int) ([]*store.Comment, error) {
+func (m *MockStore) GetCommentsByPostIDAndParentID(postID string, parentID *string, page, pageSize int) ([]*store.Comment, error) {
 	args := m.Called(postID, parentID, page, pageSize)
 	return args.Get(0).([]*store.Comment), args.Error(1)
 }
@@ -145,7 +145,7 @@ func TestGetCommentsByPostID(t *testing.T) {
 	pageSize := 10
 	comments := []*store.Comment{{ID: "comment1"}, {ID: "comment2"}}
 
-	mockStore.On("GetCommentsByPostID", postID, &page, &pageSize).Return(comments, nil)
+	mockStore.On("GetCommentsByPostID", postID, page, pageSize).Return(comments, nil)
 
 	result, err := commentService.GetCommentsByPostID(postID, page, pageSize)
 	assert.NoError(t, err)
@@ -165,7 +165,7 @@ func TestGetCommentsByPostIDAndParentID(t *testing.T) {
 	pageSize := 10
 	comments := []*store.Comment{{ID: "comment1"}, {ID: "comment2"}}
 
-	mockStore.On("GetCommentsByPostIDAndParentID", postID, &parentID, &page, &pageSize).Return(comments, nil)
+	mockStore.On("GetCommentsByPostIDAndParentID", postID, &parentID, page, pageSize).Return(comments, nil)
 
 	result, err := commentService.GetCommentsByPostIDAndParentID(postID, &parentID, page, pageSize)
 	assert.NoError(t, err)

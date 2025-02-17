@@ -38,8 +38,8 @@ type Store interface {
 
 	// Методы работы с комментариями
 	CreateComment(id, postID string, parentID *string, content string, author string) (*Comment, error)
-	GetCommentsByPostID(postID string, page, pageSize *int) ([]*Comment, error)                              // Только комментарии верхнего уровня
-	GetCommentsByPostIDAndParentID(postID string, parentID *string, page, pageSize *int) ([]*Comment, error) // Ответы на комментарий
+	GetCommentsByPostID(postID string, page, pageSize int) ([]*Comment, error)                              // Только комментарии верхнего уровня
+	GetCommentsByPostIDAndParentID(postID string, parentID *string, page, pageSize int) ([]*Comment, error) // Ответы на комментарий
 
 	// Методы работы с подписками
 	Subscribe(postID string) (<-chan *Comment, func())

@@ -142,7 +142,7 @@ func (s *Service) CreateComment(id, postID string, parentID *string, content, au
 }
 
 // Получение комментариев к посту с пагинацией
-func (s *Service) GetCommentsByPostID(postID string, page, pageSize *int) ([]*Comment, error) {
+func (s *Service) GetCommentsByPostID(postID string, page, pageSize int) ([]*Comment, error) {
 	query := `
 		SELECT id, post_id, parent_id, content, author, created_at
 		FROM comments
@@ -151,7 +151,7 @@ func (s *Service) GetCommentsByPostID(postID string, page, pageSize *int) ([]*Co
 		LIMIT $2 OFFSET $3
 		`
 	// Выполнение запроса
-	rows, err := s.DB.Query(context.Background(), query, postID, pageSize, (*page-1)**pageSize)
+	rows, err := s.DB.Query(context.Background(), query, postID, pageSize, (page-1)*pageSize)
 	if err != nil {
 		return nil, fmt.Errorf("could not get comments: %w", err)
 	}
@@ -171,7 +171,7 @@ func (s *Service) GetCommentsByPostID(postID string, page, pageSize *int) ([]*Co
 }
 
 // Получение ответов на комментарий с пагинацией
-func (s *Service) GetCommentsByPostIDAndParentID(postID string, parentID *string, page, pageSize *int) ([]*Comment, error) {
+func (s *Service) GetCommentsByPostIDAndParentID(postID string, parentID *string, page, pageSize int) ([]*Comment, error) {
 	query := `
 		SELECT id, post_id, parent_id, content, author, created_at
 		FROM comments
@@ -180,7 +180,7 @@ func (s *Service) GetCommentsByPostIDAndParentID(postID string, parentID *string
 		LIMIT $3 OFFSET $4
 		`
 	// Выполнение запроса
-	rows, err := s.DB.Query(context.Background(), query, postID, parentID, pageSize, (*page-1)**pageSize)
+	rows, err := s.DB.Query(context.Background(), query, postID, parentID, pageSize, (page-1)*pageSize)
 	if err != nil {
 		return nil, fmt.Errorf("could not get comments: %w", err)
 	}

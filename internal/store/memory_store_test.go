@@ -72,7 +72,7 @@ func TestGetCommentsByPostID(t *testing.T) {
 
 	page := 1
 	pageSize := 10
-	comments, err := memStore.GetCommentsByPostID("1", &page, &pageSize)
+	comments, err := memStore.GetCommentsByPostID("1", page, pageSize)
 	assert.NoError(t, err)
 	assert.Len(t, comments, 2)
 }
@@ -86,7 +86,7 @@ func TestGetCommentsByPostIDAndParentID(t *testing.T) {
 
 	page := 1
 	pageSize := 10
-	comments, err := memStore.GetCommentsByPostIDAndParentID("1", &parentID, &page, &pageSize)
+	comments, err := memStore.GetCommentsByPostIDAndParentID("1", &parentID, page, pageSize)
 	assert.NoError(t, err)
 	assert.Len(t, comments, 1)
 }

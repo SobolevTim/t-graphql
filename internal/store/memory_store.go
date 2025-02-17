@@ -130,27 +130,22 @@ func (s *MemoryStore) CreateComment(id, postID string, parentID *string, content
 
 // Получение комментариев по ID поста
 // ParentID == nil — комментарий к посту
-func (s *MemoryStore) GetCommentsByPostID(postID string, page, pageSize *int) ([]*Comment, error) {
+func (s *MemoryStore) GetCommentsByPostID(postID string, page, pageSize int) ([]*Comment, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	var result []*Comment
 
-	// Пагинация
-	start := 0
-	end := len(s.comments[postID])
-
-	// Если указаны page и pageSize, применяем пагинацию
-	if page != nil && pageSize != nil {
-		fmt.Println("page:", *page, "pageSize:", *pageSize)
-		start = (*page - 1) * *pageSize
-		end = start + *pageSize
-		if start > len(s.comments[postID]) {
-			start = len(s.comments[postID])
-		}
-		if end > len(s.comments[postID]) {
-			end = len(s.comments[postID])
-		}
+	// Применяем пагинацию
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	// Гарантируем, что индексы в пределах массива
+	if start >= len(s.comments[postID]) {
+		return nil, errors.New("post not found") // Выход за границы массива
 	}
+	if end > len(s.comments[postID]) {
+		end = len(s.comments[postID])
+	}
+
 	// Формируем список комментариев к посту
 	for i := start; i < end; i++ {
 		c := s.comments[postID][i]
@@ -163,7 +158,7 @@ func (s *MemoryStore) GetCommentsByPostID(postID string, page, pageSize *int) ([
 }
 
 // Получение ответов на комментарий
-func (s *MemoryStore) GetCommentsByPostIDAndParentID(postID string, parentID *string, page, pageSize *int) ([]*Comment, error) {
+func (s *MemoryStore) GetCommentsByPostIDAndParentID(postID string, parentID *string, page, pageSize int) ([]*Comment, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -178,18 +173,15 @@ func (s *MemoryStore) GetCommentsByPostIDAndParentID(postID string, parentID *st
 	}
 
 	// Применим пагинацию после фильтрации
-	start, end := 0, len(filtered)
-	if page != nil && pageSize != nil {
-		start = (*page - 1) * *pageSize
-		end = start + *pageSize
+	start := (page - 1) * pageSize
+	end := start + pageSize
 
-		// Гарантируем, что индексы в пределах массива
-		if start >= len(filtered) {
-			return []*Comment{}, nil // Пустой список, если страница выходит за границы
-		}
-		if end > len(filtered) {
-			end = len(filtered)
-		}
+	// Гарантируем, что индексы в пределах массива
+	if start >= len(filtered) {
+		return nil, errors.New("post not found") // Выход за границы массива
+	}
+	if end > len(filtered) {
+		end = len(filtered)
 	}
 
 	return filtered[start:end], nil

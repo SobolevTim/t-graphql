@@ -67,7 +67,7 @@ func (s *CommentService) GetCommentsByPostID(postID string, page, pageSize int) 
 	if pageSize <= 0 {
 		pageSize = defaultCommentPageSize
 	}
-	return s.store.GetCommentsByPostID(postID, &page, &pageSize)
+	return s.store.GetCommentsByPostID(postID, page, pageSize)
 }
 
 // GetCommentsByPostIDAndParentID возвращает ответы на комментарий к посту c постраничным выводом
@@ -78,5 +78,5 @@ func (s *CommentService) GetCommentsByPostIDAndParentID(postID string, parentID 
 	if pageSize <= 0 {
 		pageSize = defaultCommentPageSize
 	}
-	return s.store.GetCommentsByPostIDAndParentID(postID, parentID, &page, &pageSize)
+	return s.store.GetCommentsByPostIDAndParentID(postID, parentID, page, pageSize)
 }
